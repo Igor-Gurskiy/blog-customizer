@@ -4,7 +4,7 @@ import { Text } from 'src/ui/text';
 import { Select } from 'src/ui/select';
 import { RadioGroup } from 'src/ui/radio-group';
 import { Separator } from 'src/ui/separator';
-import { useState, useEffect, useRef, SyntheticEvent } from 'react';
+import { useState, useRef, SyntheticEvent } from 'react';
 import clsx from 'clsx';
 
 import styles from './ArticleParamsForm.module.scss';
@@ -18,6 +18,7 @@ import {
 	ArticleStateType,
 	defaultArticleState,
 } from 'src/constants/articleProps';
+import { useOverlayClickClose } from './hooks/useOverlayClickClose';
 
 export const ArticleParamsForm = ({
 	onParamsChange,
@@ -31,76 +32,28 @@ export const ArticleParamsForm = ({
 
 	const className = clsx(styles.container, { [styles.container_open]: isOpen });
 
-	useEffect(() => {
-		const handleClickOutside = (evt: globalThis.MouseEvent) => {
-			if (
-				isOpen &&
-				sidebarRef.current &&
-				!sidebarRef.current.contains(evt.target as Node)
-			) {
-				setIsOpen(false);
-			}
+	useOverlayClickClose({
+		isOpen,
+		sidebarRef,
+		onChange: setIsOpen,
+	});
+
+	const [articleState, setState] = useState(defaultArticleState);
+
+	const handleOnChange = (field: keyof ArticleStateType) => {
+		return (option: OptionType) => {
+			setState((prevState: ArticleStateType) => ({
+				...prevState,
+				[field]: option,
+			}));
 		};
-
-		if (isOpen) {
-			document.addEventListener('mousedown', handleClickOutside);
-		} else {
-			document.removeEventListener('mousedown', handleClickOutside);
-		}
-
-		return () => {
-			document.removeEventListener('mousedown', handleClickOutside);
-		};
-	}, [isOpen]);
-
-	const [isSelectedFont, setSelectedFont] = useState(fontFamilyOptions[0]);
-	const handleFontChange = (option: OptionType) => {
-		setSelectedFont(option);
 	};
-
-	const [isSelectedFontSize, setSelectedFontSize] = useState(
-		fontSizeOptions[0]
-	);
-	const handleFontSizeChange = (option: OptionType) => {
-		setSelectedFontSize(option);
-	};
-
-	const [isSelectedFontColor, setSelectedFontColor] = useState(fontColors[0]);
-	const handleFontColorChange = (option: OptionType) => {
-		setSelectedFontColor(option);
-	};
-
-	const [isSelectedBackgroundColor, setSelectedBackgroundColor] = useState(
-		backgroundColors[0]
-	);
-	const handleBackgroundColorChange = (option: OptionType) => {
-		setSelectedBackgroundColor(option);
-	};
-
-	const [isSelectedContentWidth, setSelectedContentWidth] = useState(
-		contentWidthArr[0]
-	);
-	const handleContentWidthChange = (option: OptionType) => {
-		setSelectedContentWidth(option);
-	};
-
 	const handleSubmit = (evt: SyntheticEvent) => {
 		evt.preventDefault();
-		const option = {
-			fontFamilyOption: isSelectedFont,
-			fontSizeOption: isSelectedFontSize,
-			fontColor: isSelectedFontColor,
-			backgroundColor: isSelectedBackgroundColor,
-			contentWidth: isSelectedContentWidth,
-		};
-		onParamsChange(option);
+		onParamsChange(articleState);
 	};
 	const handleReset = () => {
-		setSelectedFont(fontFamilyOptions[0]);
-		setSelectedFontSize(fontSizeOptions[0]);
-		setSelectedFontColor(fontColors[0]);
-		setSelectedBackgroundColor(backgroundColors[0]);
-		setSelectedContentWidth(contentWidthArr[0]);
+		setState(defaultArticleState);
 		onParamsChange(defaultArticleState);
 	};
 
@@ -113,39 +66,39 @@ export const ArticleParamsForm = ({
 						Задайте параметры
 					</Text>
 					<Select
-						selected={isSelectedFont}
+						selected={articleState.fontFamilyOption}
 						options={fontFamilyOptions}
 						placeholder={'Выберите шрифт'}
-						onChange={handleFontChange}
+						onChange={handleOnChange('fontFamilyOption')}
 						title={'Шрифт'}
 					/>
 					<RadioGroup
 						name='radio'
 						options={fontSizeOptions}
-						selected={isSelectedFontSize}
-						onChange={handleFontSizeChange}
+						selected={articleState.fontSizeOption}
+						onChange={handleOnChange('fontSizeOption')}
 						title='Размер'
 					/>
 					<Select
-						selected={isSelectedFontColor}
+						selected={articleState.fontColor}
 						options={fontColors}
 						placeholder={'Выберите цвет шрифта'}
-						onChange={handleFontColorChange}
+						onChange={handleOnChange('fontColor')}
 						title={'Размер шрифта'}
 					/>
 					<Separator />
 					<Select
-						selected={isSelectedBackgroundColor}
+						selected={articleState.backgroundColor}
 						options={backgroundColors}
 						placeholder={'Выберите цвет фона'}
-						onChange={handleBackgroundColorChange}
+						onChange={handleOnChange('backgroundColor')}
 						title={'Цвет фона'}
 					/>
 					<Select
-						selected={isSelectedContentWidth}
+						selected={articleState.contentWidth}
 						options={contentWidthArr}
 						placeholder={'Выберите ширину контента'}
-						onChange={handleContentWidthChange}
+						onChange={handleOnChange('contentWidth')}
 						title={'Ширина контента'}
 					/>
 					<div className={styles.bottomContainer}>
